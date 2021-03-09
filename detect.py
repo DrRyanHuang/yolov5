@@ -1,5 +1,6 @@
 import argparse
 import time
+import os
 from pathlib import Path
 
 import cv2
@@ -164,7 +165,7 @@ if __name__ == '__main__':
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     print(opt)
-    check_requirements()
+    # check_requirements()
 
     with torch.no_grad():
         if opt.update:  # update all models (to fix SourceChangeWarning)
@@ -172,4 +173,8 @@ if __name__ == '__main__':
                 detect()
                 strip_optimizer(opt.weights)
         else:
-            detect()
+            data_root = opt.source
+            for img_cls_path in os.listdir(data_root):
+                opt.source = os.path.join(data_root, img_cls_path)
+                detect()
+            

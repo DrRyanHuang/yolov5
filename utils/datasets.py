@@ -461,6 +461,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
 
                 # verify labels
                 if os.path.isfile(lb_file):
+                    if True:
+                        pass
                     nf += 1  # label found
                     with open(lb_file, 'r') as f:
                         l = [x.split() for x in f.read().strip().splitlines()]
@@ -471,9 +473,9 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                         l = np.array(l, dtype=np.float32)
                     if len(l):
                         assert l.shape[1] == 5, 'labels require 5 columns each'
-                        assert (l >= 0).all(), 'negative labels'
+                        # assert (l >= 0).all(), 'negative labels' 这里我们有负的 x_lt
                         assert (l[:, 1:] <= 1).all(), 'non-normalized or out of bounds coordinate labels'
-                        assert np.unique(l, axis=0).shape[0] == l.shape[0], 'duplicate labels'
+                        # assert np.unique(l, axis=0).shape[0] == l.shape[0], 'duplicate labels' # IMG_02_06 图片有重复的
                     else:
                         ne += 1  # label empty
                         l = np.zeros((0, 5), dtype=np.float32)

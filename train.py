@@ -1,3 +1,6 @@
+from PIL import Image
+Image.MAX_IMAGE_PIXELS = None
+
 import argparse
 import logging
 import math
@@ -61,19 +64,19 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
     init_seeds(2 + rank)
     with open(opt.data) as f:
         data_dict = yaml.load(f, Loader=yaml.SafeLoader)  # data dict
-    with torch_distributed_zero_first(rank):
-        check_dataset(data_dict)  # check
+    # with torch_distributed_zero_first(rank):
+    #     check_dataset(data_dict)  # check
     train_path = data_dict['train']
     test_path = data_dict['val']
     nc = 1 if opt.single_cls else int(data_dict['nc'])  # number of classes
     names = ['item'] if opt.single_cls and len(data_dict['names']) != 1 else data_dict['names']  # class names
     assert len(names) == nc, '%g names found for nc=%g dataset in %s' % (len(names), nc, opt.data)  # check
 
-    # Model
+    # Model 
     pretrained = weights.endswith('.pt')
     if pretrained:
-        with torch_distributed_zero_first(rank):
-            attempt_download(weights)  # download if not found locally
+        # with torch_distributed_zero_first(rank):
+        #     attempt_download(weights)  # download if not found locally
         ckpt = torch.load(weights, map_location=device)  # load checkpoint
         if hyp.get('anchors'):
             ckpt['model'].yaml['anchors'] = round(hyp['anchors'])  # force autoanchor
@@ -448,7 +451,7 @@ if __name__ == '__main__':
     parser.add_argument('--data', type=str, default='data/coco128.yaml', help='data.yaml path')
     parser.add_argument('--hyp', type=str, default='data/hyp.scratch.yaml', help='hyperparameters path')
     parser.add_argument('--epochs', type=int, default=300)
-    parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs')
+    parser.add_argument('--batch-size', type=int, default=4, help='total batch size for all GPUs')
     parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='[train, test] image sizes')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
     parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training')
@@ -476,13 +479,13 @@ if __name__ == '__main__':
     parser.add_argument('--linear-lr', action='store_true', help='linear LR')
     opt = parser.parse_args()
 
-    # Set DDP variables
+    # Set DDP variables (DISTRIBUTED DATA PARALLEL)
     opt.world_size = int(os.environ['WORLD_SIZE']) if 'WORLD_SIZE' in os.environ else 1
     opt.global_rank = int(os.environ['RANK']) if 'RANK' in os.environ else -1
     set_logging(opt.global_rank)
-    if opt.global_rank in [-1, 0]:
-        check_git_status()
-        check_requirements()
+    # if opt.global_rank in [-1, 0]:
+    #     check_git_status()
+    #     check_requirements()
 
     # Resume
     if opt.resume:  # resume an interrupted run
